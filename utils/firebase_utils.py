@@ -5,8 +5,24 @@ import json
 
 # Initialize Firebase
 cred_json = os.getenv('FIREBASE_CREDENTIALS')
-cred_dict = json.loads(cred_json)
-cred = credentials.Certificate(cred_dict)
+
+try:
+    # First, try to parse it as a JSON string
+    cred_dict = json.loads(cred_json)
+except json.JSONDecodeError:
+    # If that fails, assume it's already a dictionary
+    cred_dict = cred_json
+
+if isinstance(cred_dict, str):
+    # If it's still a string, it might be a file path
+    if os.path.isfile(cred_dict):
+        cred = credentials.Certificate(cred_dict)
+    else:
+        raise ValueError("FIREBASE_CREDENTIALS is not valid JSON or a file path")
+else:
+    # If it's a dictionary, use it directly
+    cred = credentials.Certificate(cred_dict)
+
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
