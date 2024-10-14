@@ -1,11 +1,10 @@
 import streamlit as st
 from utils.pdf_processing import process_pdf
-from utils.firebase_utils import save_questions_to_firebase, get_pdfs_by_subject
+from utils.mysql_utils import save_questions_to_mysql, get_pdfs_by_subject
 from utils.openai_utils import extract_questions
 import os
 from dotenv import load_dotenv
-import os
-print("FIREBASE_CREDENTIALS:", os.getenv('FIREBASE_CREDENTIALS'))
+
 load_dotenv()
 
 st.set_page_config(page_title="PDF Question Extractor", layout="wide")
@@ -43,8 +42,8 @@ def upload_pdf():
             for url in image_urls:
                 questions = extract_questions(url)
                 all_questions.extend(questions)
-            save_questions_to_firebase(all_questions, uploaded_file.name, subject, topic, subtopic)
-        st.success(f"Successfully processed {uploaded_file.name} and saved questions to Firebase.")
+            save_questions_to_mysql(all_questions, uploaded_file.name, subject, topic, subtopic)
+        st.success(f"Successfully processed {uploaded_file.name} and saved questions to MySQL.")
 
 def view_pdfs():
     st.header("View PDFs")
