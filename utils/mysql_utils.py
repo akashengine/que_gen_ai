@@ -7,19 +7,21 @@ def init_connection():
     ssh_host = st.secrets["ssh"]["host"]
     ssh_username = st.secrets["ssh"]["username"]
     ssh_password = st.secrets["ssh"]["password"]
+    
+    database_host = st.secrets["mysql"]["host"]
+    database_port = int(st.secrets["mysql"]["port"])
     database_username = st.secrets["mysql"]["user"]
     database_password = st.secrets["mysql"]["password"]
     database_name = st.secrets["mysql"]["database"]
-    localhost = "127.0.0.1"
 
     with SSHTunnelForwarder(
         (ssh_host, 22),
         ssh_username=ssh_username,
         ssh_password=ssh_password,
-        remote_bind_address=(localhost, 3306)
+        remote_bind_address=(database_host, database_port)
     ) as tunnel:
         conn = mysql.connector.connect(
-            host=localhost,
+            host='127.0.0.1',
             user=database_username,
             passwd=database_password,
             db=database_name,
