@@ -1,11 +1,11 @@
 # PDF Question Extractor
 
-This Streamlit application allows users to upload PDF files, extract questions from them using OpenAI's GPT-4 Vision model, and store the extracted questions in Firebase. It also provides a feature to view the uploaded PDFs organized by subject, topic, and subtopic.
+This Streamlit application allows users to upload PDF files, extract questions from them using OpenAI's GPT-4o Vision model, and store the extracted questions in Firebase. It also provides a feature to view the uploaded PDFs organized by subject, topic, and subtopic.
 
 ## Features
 
 - Upload PDF files
-- Extract questions from PDF images using GPT-4 Vision
+- Extract questions from PDF images using GPT-4o Vision
 - Save extracted questions to Firebase
 - View uploaded PDFs organized by subject, topic, and subtopic
 
