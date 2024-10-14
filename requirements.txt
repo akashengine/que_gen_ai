@@ -1,6 +1,6 @@
 streamlit
-firebase-admin
-pypdf
+mysql-connector-python
+PyPDF2
 pdf2image
 requests
 openai
