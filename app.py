@@ -2,7 +2,6 @@ import streamlit as st
 from utils.pdf_processing import process_pdf
 from utils.mysql_utils import save_questions_to_mysql, get_pdfs_by_subject
 from utils.openai_utils import extract_questions
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
