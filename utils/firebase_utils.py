@@ -2,29 +2,34 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 import json
+import streamlit as st
 
 # Initialize Firebase
-cred_json = os.getenv('FIREBASE_CREDENTIALS')
-
-try:
-    # First, try to parse it as a JSON string
-    cred_dict = json.loads(cred_json)
-except json.JSONDecodeError:
-    # If that fails, assume it's already a dictionary
-    cred_dict = cred_json
-
-if isinstance(cred_dict, str):
-    # If it's still a string, it might be a file path
-    if os.path.isfile(cred_dict):
-        cred = credentials.Certificate(cred_dict)
+def initialize_firebase():
+    cred_json = st.secrets["FIREBASE_CREDENTIALS"]
+    
+    try:
+        # First, try to parse it as a JSON string
+        cred_dict = json.loads(cred_json)
+    except (json.JSONDecodeError, TypeError):
+        # If that fails, assume it's already a dictionary
+        cred_dict = cred_json
+    
+    if isinstance(cred_dict, str):
+        # If it's still a string, it might be a file path
+        if os.path.isfile(cred_dict):
+            cred = credentials.Certificate(cred_dict)
+        else:
+            raise ValueError("FIREBASE_CREDENTIALS is not valid JSON or a file path")
     else:
-        raise ValueError("FIREBASE_CREDENTIALS is not valid JSON or a file path")
-else:
-    # If it's a dictionary, use it directly
-    cred = credentials.Certificate(cred_dict)
+        # If it's a dictionary, use it directly
+        cred = credentials.Certificate(cred_dict)
+    
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred)
+    return firestore.client()
 
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+db = initialize_firebase()
 
 def save_questions_to_firebase(questions, pdf_name, subject, topic, subtopic):
     doc_ref = db.collection('questions').document(pdf_name)
