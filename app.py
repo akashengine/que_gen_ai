@@ -4,7 +4,8 @@ from utils.firebase_utils import save_questions_to_firebase, get_pdfs_by_subject
 from utils.openai_utils import extract_questions
 import os
 from dotenv import load_dotenv
-
+import os
+print("FIREBASE_CREDENTIALS:", os.getenv('FIREBASE_CREDENTIALS'))
 load_dotenv()
 
 st.set_page_config(page_title="PDF Question Extractor", layout="wide")
