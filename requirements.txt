@@ -1,0 +1,8 @@
+streamlit
+firebase-admin
+pypdf
+pdf2image
+requests
+openai
+python-dotenv
+pillow
