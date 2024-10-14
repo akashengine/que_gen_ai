@@ -29,42 +29,94 @@ def init_connection():
 
 conn = init_connection()
 
-# Perform query
-@st.cache_data(ttl=600)
-def run_query(query):
-    with conn.cursor() as cur:
-        cur.execute(query)
+def run_query(query, params=None):
+    with conn.cursor(dictionary=True) as cur:
+        if params:
+            cur.execute(query, params)
+        else:
+            cur.execute(query)
         return cur.fetchall()
 
+def insert_data(query, params):
+    with conn.cursor() as cur:
+        cur.execute(query, params)
+        conn.commit()
+    return cur.lastrowid
+
+def get_or_create_subject(subject_name):
+    query = "SELECT id FROM subjects WHERE name = %s"
+    result = run_query(query, (subject_name,))
+    if result:
+        return result[0]['id']
+    else:
+        query = "INSERT INTO subjects (name) VALUES (%s)"
+        return insert_data(query, (subject_name,))
+
+def get_or_create_topic(subject_id, topic_name):
+    query = "SELECT id FROM topics WHERE subject_id = %s AND name = %s"
+    result = run_query(query, (subject_id, topic_name))
+    if result:
+        return result[0]['id']
+    else:
+        query = "INSERT INTO topics (subject_id, name) VALUES (%s, %s)"
+        return insert_data(query, (subject_id, topic_name))
+
+def get_or_create_subtopic(topic_id, subtopic_name):
+    query = "SELECT id FROM subtopics WHERE topic_id = %s AND name = %s"
+    result = run_query(query, (topic_id, subtopic_name))
+    if result:
+        return result[0]['id']
+    else:
+        query = "INSERT INTO subtopics (topic_id, name) VALUES (%s, %s)"
+        return insert_data(query, (topic_id, subtopic_name))
+
+def get_or_create_pdf(subtopic_id, pdf_name):
+    query = "SELECT id FROM pdfs WHERE subtopic_id = %s AND name = %s"
+    result = run_query(query, (subtopic_id, pdf_name))
+    if result:
+        return result[0]['id']
+    else:
+        query = "INSERT INTO pdfs (subtopic_id, name) VALUES (%s, %s)"
+        return insert_data(query, (subtopic_id, pdf_name))
+
 def save_questions_to_mysql(questions, pdf_name, subject, topic, subtopic):
-    cursor = conn.cursor()
+    subject_id = get_or_create_subject(subject)
+    topic_id = get_or_create_topic(subject_id, topic)
+    subtopic_id = get_or_create_subtopic(topic_id, subtopic)
+    pdf_id = get_or_create_pdf(subtopic_id, pdf_name)
+
     for question in questions:
         query = """
-        INSERT INTO questions (pdf_name, subject, topic, subtopic, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO questions (pdf_id, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (pdf_name, subject, topic, subtopic, 
-                               question['question'], question['options']['A'], question['options']['B'],
-                               question['options']['C'], question['options']['D'], 
-                               question['correct_answer'], question['explanation']))
-    conn.commit()
-    cursor.close()
+        insert_data(query, (pdf_id, question['question'], question['options']['A'], question['options']['B'],
+                            question['options']['C'], question['options']['D'], 
+                            question['correct_answer'], question['explanation']))
 
 def get_pdfs_by_subject():
     query = """
-    SELECT DISTINCT subject, topic, subtopic, pdf_name
-    FROM questions
-    ORDER BY subject, topic, subtopic, pdf_name
+    SELECT s.name AS subject, t.name AS topic, st.name AS subtopic, p.name AS pdf_name
+    FROM subjects s
+    JOIN topics t ON s.id = t.subject_id
+    JOIN subtopics st ON t.id = st.topic_id
+    JOIN pdfs p ON st.id = p.subtopic_id
+    ORDER BY s.name, t.name, st.name, p.name
     """
     results = run_query(query)
     organized_pdfs = {}
-    for subject, topic, subtopic, pdf_name in results:
+    for row in results:
+        subject = row['subject']
+        topic = row['topic']
+        subtopic = row['subtopic']
+        pdf_name = row['pdf_name']
+        
         if subject not in organized_pdfs:
             organized_pdfs[subject] = {}
         if topic not in organized_pdfs[subject]:
             organized_pdfs[subject][topic] = {}
         if subtopic not in organized_pdfs[subject][topic]:
             organized_pdfs[subject][topic][subtopic] = []
-        if pdf_name not in organized_pdfs[subject][topic][subtopic]:
-            organized_pdfs[subject][topic][subtopic].append(pdf_name)
+        organized_pdfs[subject][topic][subtopic].append(pdf_name)
+    
     return organized_pdfs
