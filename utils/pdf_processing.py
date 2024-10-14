@@ -1,15 +1,19 @@
-import PyPDF2
+from pypdf import PdfReader
 from pdf2image import convert_from_bytes
 import requests
 import os
+from io import BytesIO
 
 def pdf_to_images(pdf_file):
-    return convert_from_bytes(pdf_file.read(), dpi=300)
+    pdf_bytes = pdf_file.read()
+    return convert_from_bytes(pdf_bytes, dpi=300)
 
 def upload_to_imgbb(image):
     api_key = os.getenv('IMGBB_API_KEY')
     url = "https://api.imgbb.com/1/upload"
-    image_bytes = image.tobytes()
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    image_bytes = buffered.getvalue()
     response = requests.post(
         url,
         params={'key': api_key},
